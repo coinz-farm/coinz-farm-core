@@ -1,0 +1,10 @@
+[flake8]
+
+
+ignore = 
+    # line length
+    E501,
+    # continuation line under-indented for visual indent 
+    E128,
+    # closing bracket does not match visual indentation
+    E124
