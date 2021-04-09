@@ -1,6 +1,7 @@
 from aws_cdk import aws_certificatemanager as acm
 from aws_cdk import core as cdk
 from aws_cdk import aws_ec2 as ec2
+from aws_cdk import aws_ecs as ecs
 from aws_cdk import aws_elasticloadbalancingv2 as lb
 from aws_cdk import aws_route53 as route53
 from aws_cdk import aws_route53_targets as route53_targets
@@ -46,6 +47,13 @@ class CdkStack(cdk.Stack):
             )
         )
 
+        # FIXME: Move this to a parameter or Secret
+        route53.TxtRecord(self, 'GithubVerifyTxtRecord',
+            zone=zone,
+            record_name='_github-challenge-coinz-farm.coinz.farm',
+            values=['2ad9abb515']
+        )
+
         # Cert with both base and wildcard domains
         cert = acm.Certificate(
             self, 'Certificate',
@@ -66,5 +74,15 @@ class CdkStack(cdk.Stack):
                 status_code=200,
                 content_type='application/json',
                 message_body='{"message":"Welcome to coinz.farm"}'
+            )
+        )
+
+        cluster = ecs.Cluster(self, 'EcsCluster', vpc=vpc)
+
+        cluster.add_capacity('ArmCapacity',
+            instance_type=ec2.InstanceType('a1.medium'),
+            machine_image=ec2.MachineImage.from_ssm_parameter(
+                parameter_name='/aws/service/ecs/optimized-ami/amazon-linux-2/arm64/recommended/image_id',
+                os=ec2.OperatingSystemType.LINUX
             )
         )
